@@ -6,6 +6,10 @@
 .gitattributes
 .gitmodules
 
+# Compose and orchestration (not needed in build context)
+docker-compose.yml
+balena.yml
+
 # Configuration (non-build)
 readme-vars.yml
 .editorconfig

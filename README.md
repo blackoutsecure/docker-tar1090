@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/blackoutsecure/docker-tar1090 the /main/logo.png" alt="tar1090 logo" width="200">
+  <img src="https://raw.githubusercontent.com/blackoutsecure/docker-tar1090/main/logo.png" alt="tar1090 logo" width="200">
 </p>
 
 # blackoutsecure/tar1090
@@ -250,7 +250,7 @@ docker run -d \
 
 ### Balena Deployment
 
-This image can be deployed to Balena-powered IoT devices using the included `balena-compose.yml` file:
+This image can be deployed to Balena-powered IoT devices using the included `docker-compose.yml` file (which contains the required Balena labels):
 
 ```bash
 balena push <your-app-slug>

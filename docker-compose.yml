@@ -13,6 +13,9 @@ services:
     volumes:
       - config:/config
       - readsb:/data/readsb:ro
+    labels:
+      io.balena.features.supervisor-api: '1'
+      io.balena.features.balena-api: '1'
     ports:
       - "8080:8080"
     cap_drop:
