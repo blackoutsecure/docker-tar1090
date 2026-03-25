@@ -23,10 +23,7 @@ ARG VCS_URL
 RUN apk add --no-cache \
         bash \
         ca-certificates \
-        curl \
         git \
-        nginx \
-        rsync \
         wget
 
 WORKDIR /src
@@ -37,17 +34,15 @@ RUN git clone --branch ${TAR1090_REPO_BRANCH} --single-branch --depth 1 ${TAR109
     VCS_REF="$(git rev-parse HEAD)" && \
     printf 'BUILD_DATE=%s\nVERSION=%s\nVCS_REF=%s\nVCS_URL=%s\n' "${BUILD_DATE}" "${VERSION}" "${VCS_REF}" "${VCS_URL}" > /tmp/tar1090-build-metadata.env && \
     rm -rf .git && \
-    mkdir -p "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090" \
-             "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/html" \
+    mkdir -p "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/html" \
              "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/data" && \
-    rsync -a --delete html/ "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/html/" && \
+    cp -a html/. "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/html/" && \
     wget -q --https-only --tries=3 --timeout=20 -O "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/data/aircraft.csv.gz" "${TAR1090_DB_URL}" && \
     install -D -m 0644 /tmp/tar1090-build-metadata.env "${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/build-metadata.env"
 
 FROM ${BASE_IMAGE}
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
+ARG BUILD_OUTPUT_DIR
 ARG TAR1090_USER=abc
 ARG TAR1090_PORT=8080
 ARG TAR1090_SOURCE_DIR=/data/readsb
@@ -56,14 +51,14 @@ ARG VCS_URL
 
 LABEL build_version="Linuxserver.io version:- unknown Build-date:- unknown"
 LABEL maintainer="Blackout Secure - https://blackoutsecure.app/"
-LABEL org.opencontainers.image.title="docker-tar1090" \
-    org.opencontainers.image.description="LinuxServer.io style containerized tar1090 web UI that serves aircraft visualization data from a mounted readsb or dump1090 JSON directory." \
-    org.opencontainers.image.url="${VCS_URL}" \
-    org.opencontainers.image.source="${VCS_URL}" \
-    org.opencontainers.image.revision="unknown" \
-    org.opencontainers.image.created="unknown" \
-    org.opencontainers.image.version="unknown" \
-    org.opencontainers.image.licenses="GPL-3.0-or-later"
+LABEL org.opencontainers.image.title="docker-tar1090"
+LABEL org.opencontainers.image.description="LinuxServer.io style containerized tar1090 web UI that serves aircraft visualization data from a mounted readsb or dump1090 JSON directory."
+LABEL org.opencontainers.image.url="${VCS_URL}"
+LABEL org.opencontainers.image.source="${VCS_URL}"
+LABEL org.opencontainers.image.revision="unknown"
+LABEL org.opencontainers.image.created="unknown"
+LABEL org.opencontainers.image.version="unknown"
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
 
 ENV HOME="/config" \
     TAR1090_USER="${TAR1090_USER}" \
@@ -74,10 +69,9 @@ ENV HOME="/config" \
 RUN apk add --no-cache \
         bash \
         nginx \
-        tar \
         tzdata
 
-COPY --link --from=builder /out/usr/local/share/tar1090/ /usr/local/share/tar1090/
+COPY --link --from=builder ${BUILD_OUTPUT_DIR}/usr/local/share/tar1090/ /usr/local/share/tar1090/
 COPY --link root/ /
 
 RUN if [ -f /usr/local/share/tar1090/build-metadata.env ]; then . /usr/local/share/tar1090/build-metadata.env; fi && \
@@ -90,5 +84,5 @@ RUN if [ -f /usr/local/share/tar1090/build-metadata.env ]; then . /usr/local/sha
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD sh -c 'wget -q --spider http://127.0.0.1:${TAR1090_PORT:-8080}/ || exit 1'
 
-EXPOSE 8080
+EXPOSE ${TAR1090_PORT}
 VOLUME ["/config"]
