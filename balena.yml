@@ -26,7 +26,7 @@ post-provisioning: >-
   Repository: https://github.com/blackoutsecure/docker-tar1090
   Upstream application: https://github.com/wiedehopf/tar1090
 
-version: 3.14.1801
+version: 3.14.1802
 type: sw.block
 assets:
   repository:
