@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/blackoutsecure/docker-tar1090/main/logo.png" alt="tar1090 logo" width="200">
+  <img src="https://raw.githubusercontent.com/blackoutsecure/docker-tar1090 the /main/logo.png" alt="tar1090 logo" width="200">
 </p>
 
 # blackoutsecure/tar1090
@@ -10,7 +10,7 @@
 [![Release CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/release.yml?style=flat-square&label=release%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/release.yml)
 [![Docker Hub CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/dockerhub-publish.yml?style=flat-square&label=docker%20hub%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/dockerhub-publish.yml)
 [![Balena CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/balenablock-publish.yml?style=flat-square&label=balena%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/balenablock-publish.yml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0)
 
 LinuxServer.io-style containerized build of [tar1090](https://github.com/wiedehopf/tar1090), an improved, fast ADS-B web interface for readsb/dump1090-fa with maps, history, filters, and multi-instance support.
 
@@ -558,9 +558,9 @@ Container patterns: [LinuxServer.io](https://linuxserver.io/)
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 or later - see the LICENSE file for details.
+This project is licensed under the GNU General Public License v2.0 or later - see the LICENSE file for details.
 
-The tar1090 application itself is also licensed under GPL-3.0. For more information, see the [tar1090 repository](https://github.com/wiedehopf/tar1090).
+The tar1090 application itself is also licensed under GPL-2.0-or-later. For more information, see the [tar1090 repository](https://github.com/wiedehopf/tar1090).
 
 ---
 

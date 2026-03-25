@@ -58,7 +58,7 @@ LABEL org.opencontainers.image.source="${VCS_URL}"
 LABEL org.opencontainers.image.revision="unknown"
 LABEL org.opencontainers.image.created="unknown"
 LABEL org.opencontainers.image.version="unknown"
-LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
+LABEL org.opencontainers.image.licenses="GPL-2.0-or-later"
 
 ENV HOME="/config" \
     TAR1090_USER="${TAR1090_USER}" \
