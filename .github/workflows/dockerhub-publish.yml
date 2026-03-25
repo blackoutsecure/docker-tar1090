@@ -32,7 +32,7 @@ concurrency:
 env:
   REGISTRY: docker.io
   BASE_IMAGE_REGISTRY: ghcr.io
-  DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
   IMAGE_NAME: tar1090
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
   TAR1090_REPO_URL: https://github.com/wiedehopf/tar1090
@@ -228,7 +228,7 @@ jobs:
     timeout-minutes: 30
     env:
       REGISTRY: docker.io
-      DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
       IMAGE_NAME: tar1090
       TAR1090_REPO_URL: https://github.com/wiedehopf/tar1090
       TAR1090_REPO_BRANCH: master
