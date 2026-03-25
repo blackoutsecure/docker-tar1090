@@ -18,7 +18,7 @@ permissions:
 
 env:
   REGISTRY: docker.io
-  DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || secrets.DOCKERHUB_USERNAME || 'blackoutsecure' }}
+  DOCKERHUB_NAMESPACE: ${{ secrets.DOCKERHUB_NAMESPACE }}
   IMAGE_NAME: tar1090
   TAR1090_REPO_URL: https://github.com/wiedehopf/tar1090
   TAR1090_REPO_BRANCH: master
