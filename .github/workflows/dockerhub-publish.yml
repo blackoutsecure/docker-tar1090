@@ -18,6 +18,7 @@ on:
       - .dockerignore
       - docker-compose.yml
       - root/**
+      - README.md
       - .github/workflows/dockerhub-publish.yml
   workflow_dispatch:
 
@@ -138,7 +139,7 @@ jobs:
           UPSTREAM_COMMIT_SHORT="$(echo "${UPSTREAM_COMMIT}" | cut -c1-12)"
           BUILD_DATE="$(git -C "${TMPDIR}" log -1 --format=%cI FETCH_HEAD 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)"
           # Version from file (only changes when upstream maintainer increments it)
-          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || echo unknown)"
+          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
 
           echo "ℹ Upstream tar1090 version: ${UPSTREAM_VERSION} (from version file)"
           echo "ℹ Upstream tar1090 commit:  ${UPSTREAM_COMMIT_SHORT}"
@@ -293,7 +294,7 @@ jobs:
           UPSTREAM_COMMIT="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
           UPSTREAM_COMMIT_SHORT="$(echo "${UPSTREAM_COMMIT}" | cut -c1-12)"
           # Version from file (only changes when upstream maintainer increments it)
-          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || echo unknown)"
+          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
 
           echo "ℹ Upstream tar1090 version: ${UPSTREAM_VERSION} (from version file)"
           echo "ℹ Upstream tar1090 commit:  ${UPSTREAM_COMMIT_SHORT}"
@@ -325,14 +326,32 @@ jobs:
           done
 
           echo "ℹ Tagging with version: ${UPSTREAM_VERSION}"
-          echo "ℹ Tagging with upstream commit: upstream-${UPSTREAM_COMMIT_SHORT}"
+          echo "ℹ Tagging with upstream commit: ${UPSTREAM_COMMIT_SHORT}"
 
           docker buildx imagetools create \
             --tag "${IMAGE_REF}:latest" \
             --tag "${IMAGE_REF}:${UPSTREAM_VERSION}" \
-            --tag "${IMAGE_REF}:upstream-${UPSTREAM_COMMIT_SHORT}" \
+            --tag "${IMAGE_REF}:${UPSTREAM_VERSION}-${UPSTREAM_COMMIT_SHORT}" \
             "${SOURCES[@]}"
 
           docker buildx imagetools inspect "${IMAGE_REF}:latest"
           docker buildx imagetools inspect "${IMAGE_REF}:${UPSTREAM_VERSION}"
-          docker buildx imagetools inspect "${IMAGE_REF}:upstream-${UPSTREAM_COMMIT_SHORT}"
+          docker buildx imagetools inspect "${IMAGE_REF}:${UPSTREAM_VERSION}-${UPSTREAM_COMMIT_SHORT}"
+
+  update-description:
+    needs: manifest
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}
+          short-description: ${{ github.event.repository.description }}
+          enable-url-completion: true
