@@ -1,7 +1,8 @@
 name: tar1090
 description: >-
-  LinuxServer.io style containerized build of tar1090, a web UI for visualizing
-  ADS-B aircraft data from readsb or dump1090 compatible JSON outputs.
+  LinuxServer.io-style containerized build of tar1090, an improved, fast ADS-B
+  web interface for readsb/dump1090-fa with maps, history, filters, and
+  multi-instance support.
 
 post-provisioning: >-
   ## Usage instructions

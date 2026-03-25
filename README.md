@@ -6,7 +6,7 @@
 [![Balena CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/balenablock-publish.yml?style=flat-square&label=balena%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/balenablock-publish.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
 
-Unofficial community image for [tar1090](https://github.com/wiedehopf/tar1090), built with [LinuxServer.io](https://linuxserver.io/) style container patterns (s6, hardened defaults, practical runtime options) for ADS-B web visualization workloads.
+LinuxServer.io-style containerized build of [tar1090](https://github.com/wiedehopf/tar1090), an improved, fast ADS-B web interface for readsb/dump1090-fa with maps, history, filters, and multi-instance support.
 
 Sponsored and maintained by [Blackout Secure](https://blackoutsecure.app).
 
@@ -15,7 +15,7 @@ Sponsored and maintained by [Blackout Secure](https://blackoutsecure.app).
 
 ## Overview
 
-This project packages upstream [wiedehopf/tar1090](https://github.com/wiedehopf/tar1090) into an easy-to-run, LinuxServer.io-style container image with practical defaults for visualizing ADS-B aircraft data from a mounted readsb or dump1090 JSON directory.
+LinuxServer.io-style containerized build of [tar1090](https://github.com/wiedehopf/tar1090), an improved, fast ADS-B web interface for readsb/dump1090-fa with maps, history, filters, and multi-instance support.
 
 Quick links:
 
