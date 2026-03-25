@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/blackoutsecure/docker-tar1090/main/logo.png" alt="tar1090 logo" width="200">
+</p>
+
 # blackoutsecure/tar1090
 
 [![GitHub Stars](https://img.shields.io/github/stars/blackoutsecure/docker-tar1090?style=flat-square&color=E7931D&logo=github)](https://github.com/blackoutsecure/docker-tar1090/stargazers)
