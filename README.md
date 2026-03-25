@@ -6,6 +6,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/blackoutsecure/docker-tar1090?style=flat-square&color=E7931D&logo=github)](https://github.com/blackoutsecure/docker-tar1090/stargazers)
 [![Docker Pulls](https://img.shields.io/docker/pulls/blackoutsecure/tar1090?style=flat-square&color=E7931D&logo=docker&logoColor=FFFFFF)](https://hub.docker.com/r/blackoutsecure/tar1090)
+[![Balena Block](https://img.shields.io/badge/balena-block-E7931D?style=flat-square&logo=balena&logoColor=FFFFFF)](https://hub.balena.io/blocks/2352352/tar1090)
 [![Docker Hub CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/dockerhub-publish.yml?style=flat-square&label=docker%20hub%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/dockerhub-publish.yml)
 [![Balena CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/balenablock-publish.yml?style=flat-square&label=balena%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/balenablock-publish.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
@@ -24,6 +25,7 @@ LinuxServer.io-style containerized build of [tar1090](https://github.com/wiedeho
 Quick links:
 
 - Docker Hub listing: [blackoutsecure/tar1090](https://hub.docker.com/r/blackoutsecure/tar1090)
+- Balena block listing: [tar1090](https://hub.balena.io/blocks/2352352/tar1090)
 - GitHub repository: [blackoutsecure/docker-tar1090](https://github.com/blackoutsecure/docker-tar1090)
 - Upstream application: [wiedehopf/tar1090](https://github.com/wiedehopf/tar1090)
 - Upstream query parameters: [tar1090 README-query.md](https://github.com/wiedehopf/tar1090/blob/master/README-query.md)
@@ -468,6 +470,7 @@ Container patterns: [LinuxServer.io](https://linuxserver.io/)
 | Resource | Link |
 | --- | --- |
 | **Docker Hub** | [blackoutsecure/tar1090](https://hub.docker.com/r/blackoutsecure/tar1090) |
+| **Balena Block** | [tar1090](https://hub.balena.io/blocks/2352352/tar1090) |
 | **GitHub Issues** | [Report bugs or request features](https://github.com/blackoutsecure/docker-tar1090/issues) |
 
 ### Upstream & Related
