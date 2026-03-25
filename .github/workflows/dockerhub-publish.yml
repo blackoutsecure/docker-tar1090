@@ -280,11 +280,9 @@ jobs:
 
           VCS_REF="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
           VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
-          SHORT_VCS_REF="${VCS_REF:0:12}"
 
           {
             echo "vcs_ref=${VCS_REF}"
-            echo "short_vcs_ref=${SHORT_VCS_REF}"
             echo "version=${VERSION}"
           } >> "$GITHUB_OUTPUT"
 
@@ -292,7 +290,6 @@ jobs:
         env:
           IMAGE_REF: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}
           VERSION: ${{ steps.upstream.outputs.version }}
-          SHORT_VCS_REF: ${{ steps.upstream.outputs.short_vcs_ref }}
         run: |
           set -euo pipefail
 
@@ -311,9 +308,7 @@ jobs:
           docker buildx imagetools create \
             --tag "${IMAGE_REF}:latest" \
             --tag "${IMAGE_REF}:${VERSION}" \
-            --tag "${IMAGE_REF}:${VERSION}-${SHORT_VCS_REF}" \
             "${SOURCES[@]}"
 
           docker buildx imagetools inspect "${IMAGE_REF}:latest"
           docker buildx imagetools inspect "${IMAGE_REF}:${VERSION}"
-          docker buildx imagetools inspect "${IMAGE_REF}:${VERSION}-${SHORT_VCS_REF}"
