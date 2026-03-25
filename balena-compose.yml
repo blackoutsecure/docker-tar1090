@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: tar1090
     network_mode: host
     environment:
       TZ: Etc/UTC

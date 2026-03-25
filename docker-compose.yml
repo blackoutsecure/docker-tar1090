@@ -1,20 +1,18 @@
+version: '2.4'
+
 services:
   tar1090:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: tar1090
+    network_mode: host
     environment:
-      PUID: "1000"
-      PGID: "1000"
       TZ: Etc/UTC
-      TAR1090_USER: abc
-      TAR1090_PORT: "8080"
       TAR1090_SOURCE_DIR: /data/readsb
-      TAR1090_WEBROOT: /usr/local/share/tar1090/html
     volumes:
       - config:/config
-      - ./sample-data:/data/readsb:ro
+      - readsb:/data/readsb:ro
     ports:
       - "8080:8080"
     cap_drop:
@@ -27,12 +25,12 @@ services:
       - SETGID
     security_opt:
       - no-new-privileges:true
-    restart: unless-stopped
     tmpfs:
       - /tmp
       - /run:exec
-    read_only: true
+    read_only: false
+    restart: unless-stopped
 
 volumes:
   config:
-    driver: local
+  readsb:
