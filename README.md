@@ -17,6 +17,8 @@ Sponsored and maintained by [Blackout Secure](https://blackoutsecure.app).
 
 > [!IMPORTANT]
 > This repository is not an official LinuxServer.io image release.
+> Want to help make it an officially supported LinuxServer.io Community image?
+> Add your support in [linuxserver/discussions/111](https://github.com/orgs/linuxserver/discussions/111).
 
 ## Overview
 
