@@ -133,14 +133,21 @@ jobs:
             echo "Warning: Failed to fetch upstream branch ${UPSTREAM_BRANCH}, using fallback"
           }
 
-          VCS_REF="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
+          # Full commit hash (changes with every upstream push)
+          UPSTREAM_COMMIT="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
+          UPSTREAM_COMMIT_SHORT="$(echo "${UPSTREAM_COMMIT}" | cut -c1-12)"
           BUILD_DATE="$(git -C "${TMPDIR}" log -1 --format=%cI FETCH_HEAD 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)"
-          VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
+          # Version from file (only changes when upstream maintainer increments it)
+          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || echo unknown)"
+
+          echo "ℹ Upstream tar1090 version: ${UPSTREAM_VERSION} (from version file)"
+          echo "ℹ Upstream tar1090 commit:  ${UPSTREAM_COMMIT_SHORT}"
 
           {
-            echo "vcs_ref=${VCS_REF}"
+            echo "upstream_commit=${UPSTREAM_COMMIT}"
+            echo "upstream_commit_short=${UPSTREAM_COMMIT_SHORT}"
             echo "build_date=${BUILD_DATE}"
-            echo "version=${VERSION}"
+            echo "upstream_version=${UPSTREAM_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Build only (PR/check mode)
@@ -161,11 +168,13 @@ jobs:
             VCS_URL=${{ env.REPO_URL }}
           labels: |
             org.opencontainers.image.created=${{ steps.upstream.outputs.build_date }}
-            org.opencontainers.image.version=${{ steps.upstream.outputs.version }}
-            org.opencontainers.image.revision=${{ steps.upstream.outputs.vcs_ref }}
+            org.opencontainers.image.version=${{ steps.upstream.outputs.upstream_version }}
+            org.opencontainers.image.revision=${{ steps.upstream.outputs.upstream_commit }}
             org.opencontainers.image.source=${{ env.REPO_URL }}
             org.opencontainers.image.url=${{ env.REPO_URL }}
-            build_version=Linuxserver.io version:- ${{ steps.upstream.outputs.version }} Build-date:- ${{ steps.upstream.outputs.build_date }}
+            io.tar1090.upstream.version=${{ steps.upstream.outputs.upstream_version }}
+            io.tar1090.upstream.commit=${{ steps.upstream.outputs.upstream_commit_short }}
+            build_version=Linuxserver.io version:- ${{ steps.upstream.outputs.upstream_version }} Build-date:- ${{ steps.upstream.outputs.build_date }}
 
       - name: Build and publish by digest (main/manual publish mode)
         if: ${{ env.SHOULD_PUBLISH == 'true' }}
@@ -186,11 +195,13 @@ jobs:
             VCS_URL=${{ env.REPO_URL }}
           labels: |
             org.opencontainers.image.created=${{ steps.upstream.outputs.build_date }}
-            org.opencontainers.image.version=${{ steps.upstream.outputs.version }}
-            org.opencontainers.image.revision=${{ steps.upstream.outputs.vcs_ref }}
+            org.opencontainers.image.version=${{ steps.upstream.outputs.upstream_version }}
+            org.opencontainers.image.revision=${{ steps.upstream.outputs.upstream_commit }}
             org.opencontainers.image.source=${{ env.REPO_URL }}
             org.opencontainers.image.url=${{ env.REPO_URL }}
-            build_version=Linuxserver.io version:- ${{ steps.upstream.outputs.version }} Build-date:- ${{ steps.upstream.outputs.build_date }}
+            io.tar1090.upstream.version=${{ steps.upstream.outputs.upstream_version }}
+            io.tar1090.upstream.commit=${{ steps.upstream.outputs.upstream_commit_short }}
+            build_version=Linuxserver.io version:- ${{ steps.upstream.outputs.upstream_version }} Build-date:- ${{ steps.upstream.outputs.build_date }}
 
       - name: Export digest
         if: ${{ env.SHOULD_PUBLISH == 'true' }}
@@ -278,18 +289,26 @@ jobs:
             echo "Warning: Failed to fetch upstream branch ${UPSTREAM_BRANCH}"
           }
 
-          VCS_REF="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
-          VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
+          # Full commit hash (changes with every upstream push)
+          UPSTREAM_COMMIT="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
+          UPSTREAM_COMMIT_SHORT="$(echo "${UPSTREAM_COMMIT}" | cut -c1-12)"
+          # Version from file (only changes when upstream maintainer increments it)
+          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || echo unknown)"
+
+          echo "ℹ Upstream tar1090 version: ${UPSTREAM_VERSION} (from version file)"
+          echo "ℹ Upstream tar1090 commit:  ${UPSTREAM_COMMIT_SHORT}"
 
           {
-            echo "vcs_ref=${VCS_REF}"
-            echo "version=${VERSION}"
+            echo "upstream_commit=${UPSTREAM_COMMIT}"
+            echo "upstream_commit_short=${UPSTREAM_COMMIT_SHORT}"
+            echo "upstream_version=${UPSTREAM_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Create and push multi-arch manifests
         env:
           IMAGE_REF: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}
-          VERSION: ${{ steps.upstream.outputs.version }}
+          UPSTREAM_VERSION: ${{ steps.upstream.outputs.upstream_version }}
+          UPSTREAM_COMMIT_SHORT: ${{ steps.upstream.outputs.upstream_commit_short }}
         run: |
           set -euo pipefail
 
@@ -305,10 +324,15 @@ jobs:
             SOURCES+=("${IMAGE_REF}@sha256:${digest}")
           done
 
+          echo "ℹ Tagging with version: ${UPSTREAM_VERSION}"
+          echo "ℹ Tagging with upstream commit: upstream-${UPSTREAM_COMMIT_SHORT}"
+
           docker buildx imagetools create \
             --tag "${IMAGE_REF}:latest" \
-            --tag "${IMAGE_REF}:${VERSION}" \
+            --tag "${IMAGE_REF}:${UPSTREAM_VERSION}" \
+            --tag "${IMAGE_REF}:upstream-${UPSTREAM_COMMIT_SHORT}" \
             "${SOURCES[@]}"
 
           docker buildx imagetools inspect "${IMAGE_REF}:latest"
-          docker buildx imagetools inspect "${IMAGE_REF}:${VERSION}"
+          docker buildx imagetools inspect "${IMAGE_REF}:${UPSTREAM_VERSION}"
+          docker buildx imagetools inspect "${IMAGE_REF}:upstream-${UPSTREAM_COMMIT_SHORT}"

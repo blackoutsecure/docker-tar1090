@@ -47,11 +47,17 @@ jobs:
           echo "Repo:   ${UPSTREAM_REPO}"
           echo "Branch: ${UPSTREAM_BRANCH}"
 
+          # Fetch the latest commit (changes with every upstream push)
           upstream_commit="$(git ls-remote "https://github.com/${UPSTREAM_REPO}.git" "refs/heads/${UPSTREAM_BRANCH}" | cut -f1)"
-          upstream_version="${upstream_commit:0:12}"
+          upstream_commit_short="${upstream_commit:0:12}"
 
-          echo "Upstream version: ${upstream_version}"
-          echo "Upstream commit:  ${upstream_commit}"
+          # Fetch the version file (only changes when upstream maintainer increments it)
+          upstream_version="$(curl -fsSL \
+            "https://raw.githubusercontent.com/${UPSTREAM_REPO}/${UPSTREAM_BRANCH}/version" \
+            2>/dev/null | tr -d '[:space:]')"
+
+          echo "Upstream version: ${upstream_version} (from version file)"
+          echo "Upstream commit:  ${upstream_commit_short} (latest commit)"
 
           if [ -z "${upstream_version}" ] || [ -z "${upstream_commit}" ]; then
             echo "ERROR: Failed to fetch upstream version or commit"
@@ -61,12 +67,14 @@ jobs:
           jq -n \
             --arg version "${upstream_version}" \
             --arg commit "${upstream_commit}" \
+            --arg commit_short "${upstream_commit_short}" \
             --arg branch "${UPSTREAM_BRANCH}" \
-            '{"branch": $branch, "version": $version, "commit": $commit}' \
+            '{"branch": $branch, "version": $version, "commit": $commit, "commit_short": $commit_short}' \
             > /tmp/upstream-tar1090.json
 
           echo "upstream_version=${upstream_version}" >> "$GITHUB_OUTPUT"
           echo "upstream_commit=${upstream_commit}" >> "$GITHUB_OUTPUT"
+          echo "upstream_commit_short=${upstream_commit_short}" >> "$GITHUB_OUTPUT"
 
           echo "--- Comparing with tracked metadata ---"
           if [ -f "${TRACK_FILE}" ]; then
@@ -115,7 +123,8 @@ jobs:
             exit 0
           fi
 
-          COMMIT_MSG="chore(ci): track tar1090 master ${UPSTREAM_VERSION} (${UPSTREAM_COMMIT:0:7})"
+          UPSTREAM_COMMIT_SHORT="${UPSTREAM_COMMIT:0:12}"
+          COMMIT_MSG="chore(ci): track tar1090 master v${UPSTREAM_VERSION} (commit ${UPSTREAM_COMMIT_SHORT})"
           echo "Committing: ${COMMIT_MSG}"
           git commit -m "${COMMIT_MSG}"
 
@@ -156,6 +165,7 @@ jobs:
           CHANGED: ${{ steps.check.outputs.changed }}
           UPSTREAM_VERSION: ${{ steps.check.outputs.upstream_version }}
           UPSTREAM_COMMIT: ${{ steps.check.outputs.upstream_commit }}
+          UPSTREAM_COMMIT_SHORT: ${{ steps.check.outputs.upstream_commit_short }}
           EVENT_NAME: ${{ github.event_name }}
           FORCE_PUBLISH: ${{ inputs.force_publish }}
         run: |
@@ -181,8 +191,8 @@ jobs:
             echo "| --- | --- |"
             echo "| Repo | [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}/tree/${UPSTREAM_BRANCH}) |"
             echo "| Branch | \`${UPSTREAM_BRANCH}\` |"
-            echo "| Version | \`${UPSTREAM_VERSION}\` |"
-            echo "| Commit | \`${UPSTREAM_COMMIT}\` |"
+            echo "| Version (from \`version\` file) | \`${UPSTREAM_VERSION}\` |"
+            echo "| Latest Commit | \`${UPSTREAM_COMMIT_SHORT}\` (\`${UPSTREAM_COMMIT}\`) |"
             echo ""
 
             echo "### Run"

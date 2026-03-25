@@ -39,21 +39,50 @@ Quick links:
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
-- [Image Availability](#image-availability)
-- [About The tar1090 Application](#about-the-tar1090-application)
-- [Supported Architectures](#supported-architectures)
-- [Usage](#usage)
-  - [Docker Compose](#docker-compose-recommended-click-here-for-more-info)
-  - [Docker CLI](#docker-cli-click-here-for-more-info)
-  - [Balena Deployment](#balena-deployment)
-- [Parameters](#parameters)
-- [Configuration](#configuration)
-- [Application Setup](#application-setup)
-- [Troubleshooting](#troubleshooting)
-- [Release & Versioning](#release--versioning)
-- [Support & Getting Help](#support--getting-help)
-- [References](#references)
+- [blackoutsecure/tar1090](#blackoutsecuretar1090)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [Quick Start](#quick-start)
+  - [Image Availability](#image-availability)
+  - [About The tar1090 Application](#about-the-tar1090-application)
+  - [Supported Architectures](#supported-architectures)
+  - [Usage](#usage)
+    - [docker-compose (recommended, click here for more info)](#docker-compose-recommended-click-here-for-more-info)
+    - [docker-compose with paired readsb container](#docker-compose-with-paired-readsb-container)
+    - [docker-cli (click here for more info)](#docker-cli-click-here-for-more-info)
+    - [Balena Deployment](#balena-deployment)
+  - [Parameters](#parameters)
+    - [Ports](#ports)
+    - [Environment Variables](#environment-variables)
+    - [Storage Mounts](#storage-mounts)
+  - [Volume Details](#volume-details)
+    - [`/config` — Configuration \& Persistence](#config--configuration--persistence)
+    - [`/data/readsb` — Decoder JSON Input](#datareadsb--decoder-json-input)
+    - [Best Practices](#best-practices)
+    - [Volume Mount Examples](#volume-mount-examples)
+  - [Configuration](#configuration)
+  - [User / Group Identifiers](#user--group-identifiers)
+  - [Application Setup](#application-setup)
+    - [Key Features](#key-features)
+    - [Features That Depend On The Decoder](#features-that-depend-on-the-decoder)
+  - [Troubleshooting](#troubleshooting)
+    - [Container won't start or exits immediately](#container-wont-start-or-exits-immediately)
+    - [The web UI loads but no aircraft appear](#the-web-ui-loads-but-no-aircraft-appear)
+    - [Container starts but page appears incomplete](#container-starts-but-page-appears-incomplete)
+    - [HTTP port conflict](#http-port-conflict)
+    - [Advanced tar1090 behavior questions](#advanced-tar1090-behavior-questions)
+    - [Getting help](#getting-help)
+  - [Release \& Versioning](#release--versioning)
+    - [Docker Hub Tags](#docker-hub-tags)
+    - [How It Works](#how-it-works)
+    - [Checking Your Image Version](#checking-your-image-version)
+  - [Support \& Getting Help](#support--getting-help)
+  - [Sponsor \& Credits](#sponsor--credits)
+  - [References](#references)
+    - [Project Resources](#project-resources)
+    - [Upstream \& Related](#upstream--related)
+    - [Technical Resources](#technical-resources)
+  - [License](#license)
 
 ---
 
@@ -100,11 +129,11 @@ For compose files, balena, and more examples, see [Usage](#usage) below.
 # Pull latest
 docker pull blackoutsecure/tar1090
 
-# Pull specific version (upstream short commit hash)
-docker pull blackoutsecure/tar1090:abc123def
+# Pull by upstream version (from version file)
+docker pull blackoutsecure/tar1090:3.14.1801
 
-# Pull architecture-specific (rarely needed)
-docker pull blackoutsecure/tar1090:latest@amd64
+# Pull by upstream commit (tracks exact source)
+docker pull blackoutsecure/tar1090:upstream-2bf25135a665
 ```
 
 ---
@@ -420,22 +449,57 @@ For filter syntax, query parameters, `?pTracks`, heatmaps, and multi-instance be
 
 ## Release & Versioning
 
-This project tracks the upstream [wiedehopf/tar1090](https://github.com/wiedehopf/tar1090) master branch:
+This project tracks two independent values from the upstream [wiedehopf/tar1090](https://github.com/wiedehopf/tar1090) master branch:
 
-- Multi-arch images (amd64, arm64) built automatically on upstream changes
-- Docker Hub tags: `latest`, version-specific (upstream short commit hash), and architecture-specific
+| What | Source | Example | Changes when |
+| --- | --- | --- | --- |
+| **Upstream Version** | [`version` file](https://github.com/wiedehopf/tar1090/blob/master/version) | `3.14.1801` | Upstream maintainer bumps it |
+| **Upstream Commit** | Latest commit on `master` | `2bf25135a665` | Every upstream push |
+
+These are two different things: the commit changes frequently with every push, while the version only changes when the upstream maintainer explicitly increments it. Both are tracked and published.
+
+### Docker Hub Tags
+
+Every build produces multiple tags so you can pin at the granularity you need:
+
+| Tag | Example | Description |
+| --- | --- | --- |
+| `latest` | `blackoutsecure/tar1090:latest` | Always points to the most recent build |
+| `<version>` | `blackoutsecure/tar1090:3.14.1801` | Matches the upstream `version` file |
+| `<major>.<minor>` | `blackoutsecure/tar1090:3.14` | Semver major.minor from upstream version |
+| `<major>` | `blackoutsecure/tar1090:3` | Semver major from upstream version |
+| `upstream-<commit>` | `blackoutsecure/tar1090:upstream-2bf25135a665` | Exact upstream commit hash |
+
+### How It Works
+
+Four GitHub Actions workflows handle version tracking and publishing:
+
+1. **[Upstream Release Monitor](../../actions/workflows/upstream-release-monitor.yml)** — Runs every 6 hours. Fetches both the upstream `version` file and latest commit hash, compares against the tracked state in `.github/upstream/tar1090-master.json`, and dispatches builds when either value changes.
+
+2. **[Docker Hub Publish](../../actions/workflows/dockerhub-publish.yml)** — Builds multi-arch images (amd64, arm64) and pushes to Docker Hub with version, upstream commit, and `latest` tags. OCI labels include both `org.opencontainers.image.version` (from version file) and custom `io.tar1090.upstream.commit` labels.
+
+3. **[Balena Block Publish](../../actions/workflows/balenablock-publish.yml)** — Builds and deploys to Balena Hub. Updates `balena.yml` with the upstream version and tags the release with both version and commit metadata.
+
+4. **[Release](../../actions/workflows/release.yml)** — Creates GitHub Releases with full release notes. On manual dispatch, fetches the upstream version to use as the release tag. Produces semver Docker tags plus the upstream commit tag.
+
+### Checking Your Image Version
+
+```bash
+# Check the upstream version baked into the image
+docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' blackoutsecure/tar1090:latest
+
+# Check the upstream commit baked into the image
+docker inspect -f '{{ index .Config.Labels "io.tar1090.upstream.commit" }}' blackoutsecure/tar1090:latest
+
+# Check the full build version string
+docker inspect -f '{{ index .Config.Labels "build_version" }}' blackoutsecure/tar1090:latest
+```
 
 **Update to latest:**
 
 ```bash
 docker pull blackoutsecure/tar1090:latest
 docker-compose up -d  # if using compose
-```
-
-**Check image version:**
-
-```bash
-docker inspect -f '{{ index .Config.Labels "build_version" }}' blackoutsecure/tar1090:latest
 ```
 
 ---

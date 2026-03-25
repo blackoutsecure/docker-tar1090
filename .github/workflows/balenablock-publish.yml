@@ -62,23 +62,29 @@ jobs:
           git -C "${TMPDIR}" remote add origin "${UPSTREAM_REPO_URL}"
           git -C "${TMPDIR}" fetch --depth 1 origin "${UPSTREAM_BRANCH}" >/dev/null
 
-          VCS_REF="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD)"
+          # Full commit hash (changes with every upstream push)
+          UPSTREAM_COMMIT="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD)"
+          UPSTREAM_COMMIT_SHORT="$(echo "${UPSTREAM_COMMIT}" | cut -c1-12)"
           BUILD_DATE="$(git -C "${TMPDIR}" log -1 --format=%cI FETCH_HEAD)"
-          VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
+          # Version from file (only changes when upstream maintainer increments it)
+          UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || echo unknown)"
+
+          echo "ℹ Upstream tar1090 version: ${UPSTREAM_VERSION} (from version file)"
+          echo "ℹ Upstream tar1090 commit:  ${UPSTREAM_COMMIT_SHORT}"
 
           {
-            echo "vcs_ref=${VCS_REF}"
+            echo "upstream_commit=${UPSTREAM_COMMIT}"
+            echo "upstream_commit_short=${UPSTREAM_COMMIT_SHORT}"
             echo "build_date=${BUILD_DATE}"
-            echo "version=${VERSION}"
+            echo "upstream_version=${UPSTREAM_VERSION}"
           } >> "$GITHUB_OUTPUT"
-
-          echo "Resolved upstream tar1090 version: ${VERSION}"
 
       - name: Update balena.yml with resolved version
         run: |
           set -euo pipefail
-          VERSION="${{ steps.upstream.outputs.version }}"
-          echo "Updating balena.yml version from placeholder to: ${VERSION}"
+          VERSION="${{ steps.upstream.outputs.upstream_version }}"
+          COMMIT="${{ steps.upstream.outputs.upstream_commit_short }}"
+          echo "Updating balena.yml version to: ${VERSION} (upstream commit: ${COMMIT})"
           sed -i -E "s/^version: .*/version: ${VERSION}/" balena.yml
           grep "^version:" balena.yml
 
@@ -86,7 +92,8 @@ jobs:
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: |
           set -euo pipefail
-          VERSION="${{ steps.upstream.outputs.version }}"
+          VERSION="${{ steps.upstream.outputs.upstream_version }}"
+          COMMIT="${{ steps.upstream.outputs.upstream_commit_short }}"
           if git diff --quiet -- balena.yml; then
             echo "balena.yml already matches ${VERSION}"
             exit 0
@@ -95,7 +102,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add balena.yml
-          git commit -m "chore: sync balena block version to ${VERSION}"
+          git commit -m "chore: sync balena block version to ${VERSION} (upstream ${COMMIT})"
           git push
 
       - name: Prepare Balena source context
@@ -136,13 +143,15 @@ jobs:
           balena login --token "${BALENA_TOKEN}"
           balena push "${BALENA_NAMESPACE}/${BALENA_BLOCK_RELEASE}" \
             --source ./.balena-source \
-            --release-tag balena-ci-commit-sha "${GITHUB_SHA}"
+            --release-tag balena-ci-commit-sha "${GITHUB_SHA}" \
+            --release-tag upstream-version "${{ steps.upstream.outputs.upstream_version }}" \
+            --release-tag upstream-commit "${{ steps.upstream.outputs.upstream_commit_short }}"
           RELEASE_ID=$(balena release list "${BALENA_NAMESPACE}/${BALENA_BLOCK_RELEASE}" --json | jq -r '.[0].id')
           echo "release_id=${RELEASE_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Log deployment info
         run: |
           echo "Published block release slug: ${{ env.BALENA_NAMESPACE }}/${{ env.BALENA_BLOCK_RELEASE }}"
-          echo "Version: ${{ steps.upstream.outputs.version }}"
+          echo "Upstream tar1090 version: ${{ steps.upstream.outputs.upstream_version }} (from version file)"
+          echo "Upstream tar1090 commit:  ${{ steps.upstream.outputs.upstream_commit_short }}"
           echo "Build date: ${{ steps.upstream.outputs.build_date }}"
-          echo "VCS ref: ${{ steps.upstream.outputs.vcs_ref }}"

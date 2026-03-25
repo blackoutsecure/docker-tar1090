@@ -44,15 +44,28 @@ jobs:
           echo "ℹ Event: ${EVENT_ACTION}"
 
           if [ "${EVENT_ACTION}" = "workflow_dispatch" ]; then
-            echo "ℹ Manual dispatch: fetching version from upstream wiedehopf/tar1090 (${TAR1090_REPO_BRANCH})"
-            UPSTREAM_COMMIT=$(git ls-remote "https://github.com/wiedehopf/tar1090.git" "refs/heads/${TAR1090_REPO_BRANCH}" | cut -f1 | cut -c1-12)
+            echo "ℹ Manual dispatch: fetching metadata from upstream wiedehopf/tar1090 (${TAR1090_REPO_BRANCH})"
+
+            # Fetch the version file (incremented by upstream maintainer)
+            UPSTREAM_VERSION=$(curl -fsSL \
+              "https://raw.githubusercontent.com/wiedehopf/tar1090/${TAR1090_REPO_BRANCH}/version" \
+              2>/dev/null | tr -d '[:space:]')
+            if [[ -z "${UPSTREAM_VERSION}" ]]; then
+              echo "ERROR: Could not fetch version from wiedehopf/tar1090/${TAR1090_REPO_BRANCH}/version"
+              exit 1
+            fi
+
+            # Fetch the latest commit hash (changes with every push)
+            UPSTREAM_COMMIT=$(git ls-remote "https://github.com/wiedehopf/tar1090.git" \
+              "refs/heads/${TAR1090_REPO_BRANCH}" | cut -f1 | cut -c1-12)
             if [[ -z "${UPSTREAM_COMMIT}" ]]; then
               echo "ERROR: Could not fetch commit from wiedehopf/tar1090 ${TAR1090_REPO_BRANCH}"
               exit 1
             fi
-            echo "ℹ Upstream commit detected: ${UPSTREAM_COMMIT}"
-            TAG="${UPSTREAM_COMMIT}"
-            NAME="${DISPATCH_NAME:-Upstream tar1090 ${UPSTREAM_COMMIT}}"
+
+            echo "ℹ Upstream version: ${UPSTREAM_VERSION} (commit: ${UPSTREAM_COMMIT})"
+            TAG="${UPSTREAM_VERSION}"
+            NAME="${DISPATCH_NAME:-Upstream tar1090 ${UPSTREAM_VERSION} (${UPSTREAM_COMMIT})}"
           else
             TAG="${RELEASE_TAG}"
             NAME="${RELEASE_NAME:-GitHub Release}"
@@ -98,8 +111,8 @@ jobs:
           git -C "${TMPDIR}" remote add origin "${TAR1090_REPO_URL}.git" 2>&1
           if git -C "${TMPDIR}" fetch --depth 1 origin "${TAR1090_REPO_BRANCH}" >/dev/null 2>&1; then
             UPSTREAM_COMMIT="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null | cut -c1-12)"
-            UPSTREAM_VERSION="${UPSTREAM_COMMIT}"
-            echo "ℹ Upstream tar1090: ${UPSTREAM_VERSION}"
+            UPSTREAM_VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null | tr -d '[:space:]' || echo "${UPSTREAM_COMMIT}")"
+            echo "ℹ Upstream tar1090: ${UPSTREAM_VERSION} (${UPSTREAM_COMMIT})"
           else
             UPSTREAM_COMMIT="unknown"
             UPSTREAM_VERSION="unknown"
@@ -152,7 +165,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ needs.release-metadata.outputs.version }}
+            type=semver,pattern={{version}},value=${{ needs.release-metadata.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-metadata.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.release-metadata.outputs.version }}
+            type=raw,value=upstream-${{ needs.release-metadata.outputs.upstream_commit }}
             type=raw,value=latest
             type=sha,prefix={{branch}}-
 
@@ -210,7 +226,8 @@ jobs:
 
           - **Image Version:** ${RELEASE_VERSION}
           - **Release Tag:** ${RELEASE_TAG}
-          - **Upstream tar1090:** ${UPSTREAM_VERSION} (commit: ${UPSTREAM_COMMIT})
+          - **Upstream tar1090 Version:** ${UPSTREAM_VERSION} (from \`version\` file)
+          - **Upstream tar1090 Commit:** ${UPSTREAM_COMMIT}
           - **Build Date:** ${BUILD_DATE}
           - **Repository:** https://github.com/${{ github.repository }}
 
@@ -300,7 +317,8 @@ jobs:
 
           - **Image Version:** ${{ env.RELEASE_VERSION }}
           - **Release Tag:** ${{ env.RELEASE_TAG }}
-          - **Upstream tar1090:** ${{ env.UPSTREAM_VERSION }} (commit: ${{ env.UPSTREAM_COMMIT }})
+          - **Upstream tar1090 Version:** ${{ env.UPSTREAM_VERSION }} (from `version` file)
+          - **Upstream tar1090 Commit:** ${{ env.UPSTREAM_COMMIT }}
           - **Build Date:** $(date -u +'%Y-%m-%dT%H:%M:%SZ')
           - **Repository:** ${{ github.server_url }}/${{ github.repository }}
 
@@ -361,21 +379,24 @@ jobs:
           RELEASE_TAG: ${{ needs.validate-release.outputs.release_tag }}
           DOCKER_IMAGE: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_NAMESPACE }}/${{ env.IMAGE_NAME }}
           UPSTREAM_VERSION: ${{ needs.release-metadata.outputs.upstream_version }}
+          UPSTREAM_COMMIT: ${{ needs.release-metadata.outputs.upstream_commit }}
         run: |
           cat << EOF
           ===== Release Workflow Complete =====
 
-          Version:           ${{ env.RELEASE_VERSION }}
-          Release Tag:       ${{ env.RELEASE_TAG }}
-          Docker Hub Image:  ${{ env.DOCKER_IMAGE }}:${{ env.RELEASE_VERSION }}
-          Latest Tag:        ${{ env.DOCKER_IMAGE }}:latest
-          Upstream tar1090:  ${{ env.UPSTREAM_VERSION }}
-          Repository:        ${{ github.repository }}
-          Triggered by:      ${{ github.triggering_actor }}
-          Timestamp:         $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          Version:                  ${{ env.RELEASE_VERSION }}
+          Release Tag:              ${{ env.RELEASE_TAG }}
+          Docker Hub Image:         ${{ env.DOCKER_IMAGE }}:${{ env.RELEASE_VERSION }}
+          Latest Tag:               ${{ env.DOCKER_IMAGE }}:latest
+          Upstream tar1090 Version: ${{ env.UPSTREAM_VERSION }} (from version file)
+          Upstream tar1090 Commit:  ${{ env.UPSTREAM_COMMIT }}
+          Repository:               ${{ github.repository }}
+          Triggered by:             ${{ github.triggering_actor }}
+          Timestamp:                $(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
           Available Tags:
           - ${{ env.DOCKER_IMAGE }}:${{ env.RELEASE_VERSION }} (specific version)
+          - ${{ env.DOCKER_IMAGE }}:upstream-${{ env.UPSTREAM_COMMIT }} (upstream commit)
           - ${{ env.DOCKER_IMAGE }}:latest (current stable)
           - Architectures: amd64, arm64v8
 
