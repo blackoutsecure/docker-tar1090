@@ -32,6 +32,10 @@ assets:
     type: blob.asset
     data:
       url: 'https://github.com/blackoutsecure/docker-tar1090'
+  logo:
+    type: blob.asset
+    data:
+      url: 'https://raw.githubusercontent.com/blackoutsecure/docker-tar1090/main/logo.png'
 data:
   defaultDeviceType: raspberrypi3
   supportedDeviceTypes:

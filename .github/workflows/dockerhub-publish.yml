@@ -135,7 +135,7 @@ jobs:
 
           VCS_REF="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
           BUILD_DATE="$(git -C "${TMPDIR}" log -1 --format=%cI FETCH_HEAD 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)"
-          VERSION="$(git -C "${TMPDIR}" rev-parse --short FETCH_HEAD 2>/dev/null || echo unknown)"
+          VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
 
           {
             echo "vcs_ref=${VCS_REF}"
@@ -279,7 +279,7 @@ jobs:
           }
 
           VCS_REF="$(git -C "${TMPDIR}" rev-parse FETCH_HEAD 2>/dev/null || echo unknown)"
-          VERSION="$(git -C "${TMPDIR}" rev-parse --short FETCH_HEAD 2>/dev/null || echo unknown)"
+          VERSION="$(git -C "${TMPDIR}" show FETCH_HEAD:version 2>/dev/null || git -C "${TMPDIR}" describe --tags --always --dirty FETCH_HEAD 2>/dev/null || echo unknown)"
           SHORT_VCS_REF="${VCS_REF:0:12}"
 
           {

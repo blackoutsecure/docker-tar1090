@@ -5,22 +5,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tar1090
     network_mode: host
     environment:
-      PUID: "1000"
-      PGID: "1000"
       TZ: Etc/UTC
-      TAR1090_USER: abc
-      TAR1090_PORT: "8080"
       TAR1090_SOURCE_DIR: /data/readsb
-      TAR1090_WEBROOT: /usr/local/share/tar1090/html
     volumes:
       - config:/config
       - readsb:/data/readsb:ro
     labels:
       io.balena.features.supervisor-api: '1'
       io.balena.features.balena-api: '1'
+    ports:
+      - "8080:8080"
     cap_drop:
       - ALL
     cap_add:
@@ -30,7 +26,11 @@ services:
       - SETUID
       - SETGID
     security_opt:
-      - no-new-privileges=false
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /run:exec
+    read_only: false
     restart: unless-stopped
 
 volumes:
