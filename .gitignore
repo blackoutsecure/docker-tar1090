@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+
+.vscode/
+.idea/
+*.swp
+*~
+
+tmp/
+.cache/
+dist/
+build/
+
+*.log

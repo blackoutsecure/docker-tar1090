@@ -1,0 +1,25 @@
+# CI/CD and VCS
+.github/
+.git
+.git/**
+.gitignore
+.gitattributes
+.gitmodules
+
+# Configuration (non-build)
+readme-vars.yml
+.editorconfig
+
+# Development and local artifacts
+local/
+.local/
+.cache/
+tmp/
+sample-data/
+
+# Build artifacts
+*.o
+*.so
+*.a
+*.log
+*.tmp

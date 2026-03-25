@@ -1,0 +1,37 @@
+#!/usr/bin/with-contenv bash
+
+set -euo pipefail
+
+tar1090_user=${TAR1090_USER:-abc}
+tar1090_source_dir=${TAR1090_SOURCE_DIR:-/data/readsb}
+tar1090_port=${TAR1090_PORT:-8080}
+
+if [[ "${tar1090_user}" != "root" ]]; then
+    if [[ "${tar1090_user}" == "abc" && -z ${PUID:-} ]]; then
+        export PUID=911
+    fi
+    if [[ "${tar1090_user}" == "abc" && -z ${PGID:-} ]]; then
+        export PGID=911
+    fi
+fi
+
+# Create directories; in read-only mode /run and /tmp are tmpfs,
+# and /config is a volume, so these should succeed.
+# Use -p and ignore errors for paths that may already exist on the read-only layer.
+mkdir -p /config "${tar1090_source_dir}" 2>/dev/null || true
+mkdir -p /tmp/nginx-client-body /tmp/nginx-proxy-temp \
+         /tmp/nginx-fastcgi-temp /tmp/nginx-uwsgi-temp /tmp/nginx-scgi-temp 2>/dev/null || true
+
+# Render nginx server config from template, substituting the configured port
+# and source directory. Output to /run (tmpfs) so it works in read-only mode.
+mkdir -p /run/nginx/http.d 2>/dev/null || true
+sed -e "s|\${TAR1090_PORT}|${tar1090_port}|g" \
+    -e "s|\${TAR1090_SOURCE_DIR}|${tar1090_source_dir}|g" \
+    /etc/nginx/http.d/default.conf.template \
+    > /run/nginx/http.d/default.conf
+
+# Only chown when running as root (s6 default mode with PUID/PGID).
+# When running non-root via user: directive, lsiown is unavailable and unnecessary.
+if [[ -z ${LSIO_NON_ROOT_USER:-} ]]; then
+    lsiown -R "${tar1090_user}:${tar1090_user}" /config /run/nginx 2>/dev/null || true
+fi

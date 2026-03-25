@@ -1,0 +1,10 @@
+{
+  "name": "docker-tar1090",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "tar1090 Web UI (default)",
+      "onAutoForward": "notify"
+    }
+  }
+}

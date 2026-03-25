@@ -1,0 +1,31 @@
+#!/usr/bin/with-contenv bash
+
+set -euo pipefail
+
+build_metadata_path=/usr/local/share/tar1090/build-metadata.env
+if [[ -r "${build_metadata_path}" ]]; then
+    set -a
+    . "${build_metadata_path}"
+    set +a
+fi
+
+timestamp_utc() {
+    date -u '+%Y-%m-%d %H:%M:%S UTC'
+}
+
+tar1090_port=${TAR1090_PORT:-8080}
+tar1090_source_dir=${TAR1090_SOURCE_DIR:-/data/readsb}
+
+# Check source data directory
+if [[ ! -d "${tar1090_source_dir}" ]]; then
+    printf '[%s] WARNING: source directory %s does not exist\n' "$(timestamp_utc)" "${tar1090_source_dir}"
+elif [[ ! -f "${tar1090_source_dir}/aircraft.json" ]]; then
+    printf '[%s] WARNING: aircraft.json not found in %s — no decoder data available\n' "$(timestamp_utc)" "${tar1090_source_dir}"
+else
+    printf '[%s] source data OK: %s/aircraft.json found\n' "$(timestamp_utc)" "${tar1090_source_dir}"
+fi
+
+printf '[%s] starting tar1090 nginx on port %s\n' "$(timestamp_utc)" "${tar1090_port}"
+printf '[%s] web interface: http://<host-ip>:%s\n' "$(timestamp_utc)" "${tar1090_port}"
+
+exec nginx -g 'daemon off;'
