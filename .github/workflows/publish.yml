@@ -365,37 +365,10 @@ jobs:
           fleet: ${{ steps.targets.outputs.block_fleet }}
           cache: false
           layer_cache: false
-          debug: false
-
-      - name: Tag Balena release with metadata
-        if: steps.balena-deploy.outputs.release_id != ''
-        env:
-          BALENA_TOKEN: ${{ secrets.BALENA_API_TOKEN }}
-        run: |
-          set -euo pipefail
-          npm install -g balena-cli
-          balena login --token "${BALENA_TOKEN}"
-          RELEASE_ID="${{ steps.balena-deploy.outputs.release_id }}"
-          echo "Tagging release ${RELEASE_ID} with metadata"
-          balena tag set balena-ci-commit-sha "${GITHUB_SHA}" --release "${RELEASE_ID}"
-          balena tag set upstream-version "${{ needs.preflight.outputs.upstream_version }}" --release "${RELEASE_ID}"
-          balena tag set upstream-commit "${{ needs.preflight.outputs.upstream_commit_short }}" --release "${RELEASE_ID}"
-
-      - name: Apply fleet configuration from balena.yml
-        if: steps.balena-deploy.outputs.release_id != ''
-        env:
-          BALENA_TOKEN: ${{ secrets.BALENA_API_TOKEN }}
-        run: |
-          set -euo pipefail
-          balena login --token "${BALENA_TOKEN}"
-          FLEET="${{ steps.targets.outputs.block_fleet }}"
-          CONFIG_URL="${REPO_URL}/blob/main/balena.yml"
-          echo "Setting fleet configUrl to: ${CONFIG_URL}"
-          balena tag set configUrl "${CONFIG_URL}" --fleet "${FLEET}"
+          debug: true
 
       - name: Log deployment info
         run: |
           echo "Published block release slug: ${{ steps.targets.outputs.block_fleet }}"
-          echo "Release ID: ${{ steps.balena-deploy.outputs.release_id }}"
           echo "Balena version: ${{ needs.preflight.outputs.upstream_version }}"
           echo "Upstream commit: ${{ needs.preflight.outputs.upstream_commit_short }}"
