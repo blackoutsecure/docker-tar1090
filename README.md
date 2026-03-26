@@ -8,8 +8,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/blackoutsecure/tar1090?style=flat-square&color=E7931D&logo=docker&logoColor=FFFFFF)](https://hub.docker.com/r/blackoutsecure/tar1090)
 [![GitHub Release](https://img.shields.io/github/release/blackoutsecure/docker-tar1090.svg?style=flat-square&color=E7931D&logo=github&logoColor=FFFFFF)](https://github.com/blackoutsecure/docker-tar1090/releases)
 [![Release CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/release.yml?style=flat-square&label=release%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/release.yml)
-[![Docker Hub CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/dockerhub-publish.yml?style=flat-square&label=docker%20hub%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/dockerhub-publish.yml)
-[![Balena CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/balenablock-publish.yml?style=flat-square&label=balena%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/balenablock-publish.yml)
+[![Publish CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/publish.yml?style=flat-square&label=publish%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/publish.yml)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0)
 
 LinuxServer.io-style containerized build of [tar1090](https://github.com/wiedehopf/tar1090), an improved, fast ADS-B web interface for readsb/dump1090-fa with maps, history, filters, and multi-instance support.
@@ -91,7 +90,7 @@ Quick links:
 **5-minute web UI setup (with sample data):**
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 Open `http://localhost:8080`.
@@ -472,15 +471,13 @@ Every build produces multiple tags so you can pin at the granularity you need:
 
 ### How It Works
 
-Four GitHub Actions workflows handle version tracking and publishing:
+Three GitHub Actions workflows handle version tracking and publishing:
 
 1. **[Upstream Release Monitor](../../actions/workflows/upstream-release-monitor.yml)** — Runs every 6 hours. Fetches both the upstream `version` file and latest commit hash, compares against the tracked state in `.github/upstream/tar1090-master.json`, and dispatches builds when either value changes.
 
-2. **[Docker Hub Publish](../../actions/workflows/dockerhub-publish.yml)** — Builds multi-arch images (amd64, arm64) and pushes to Docker Hub with version, upstream commit, and `latest` tags. OCI labels include both `org.opencontainers.image.version` (from version file) and custom `io.tar1090.upstream.commit` labels.
+2. **[Publish](../../actions/workflows/publish.yml)** — Combined Docker Hub and Balena publish workflow. Builds multi-arch images (amd64, arm64), pushes to Docker Hub with version, upstream commit, and `latest` tags, updates the Docker Hub description, and deploys the Balena block release. OCI labels include both `org.opencontainers.image.version` (from version file) and custom `io.tar1090.upstream.commit` labels.
 
-3. **[Balena Block Publish](../../actions/workflows/balenablock-publish.yml)** — Builds and deploys to Balena Hub. Updates `balena.yml` with the upstream version and tags the release with both version and commit metadata.
-
-4. **[Release](../../actions/workflows/release.yml)** — Creates GitHub Releases with full release notes. On manual dispatch, fetches the upstream version to use as the release tag. Produces semver Docker tags plus the upstream commit tag.
+3. **[Release](../../actions/workflows/release.yml)** — Creates GitHub Releases with full release notes. On manual dispatch, fetches the upstream version to use as the release tag. Produces semver Docker tags plus the upstream commit tag.
 
 ### Checking Your Image Version
 

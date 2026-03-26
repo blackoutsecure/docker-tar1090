@@ -23,8 +23,7 @@ env:
   UPSTREAM_REPO: wiedehopf/tar1090
   UPSTREAM_BRANCH: master
   TRACK_FILE: .github/upstream/tar1090-master.json
-  TARGET_WORKFLOW_DOCKER: dockerhub-publish.yml
-  TARGET_WORKFLOW_BALENA: balenablock-publish.yml
+  TARGET_WORKFLOW: publish.yml
   GIT_CONFIG_USER_NAME: github-actions[bot]
   GIT_CONFIG_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
 
@@ -155,8 +154,7 @@ jobs:
             echo "Dispatch sent: ${workflow}"
           }
 
-          dispatch "${TARGET_WORKFLOW_DOCKER}"
-          dispatch "${TARGET_WORKFLOW_BALENA}"
+          dispatch "${TARGET_WORKFLOW}"
           echo "All downstream workflows dispatched"
 
       - name: Publish monitor summary

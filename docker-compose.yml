@@ -2,9 +2,7 @@ version: '2.4'
 
 services:
   tar1090:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: blackoutsecure/tar1090:latest
     container_name: tar1090
     network_mode: host
     environment:
