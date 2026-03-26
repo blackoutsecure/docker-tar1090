@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   tar1090:
-    image: blackoutsecure/tar1090:latest
+    image: docker.io/blackoutsecure/tar1090:latest
     container_name: tar1090
     network_mode: host
     environment:
