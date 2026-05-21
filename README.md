@@ -7,8 +7,8 @@
 [![GitHub Stars](https://img.shields.io/github/stars/blackoutsecure/docker-tar1090?style=flat-square&color=E7931D&logo=github)](https://github.com/blackoutsecure/docker-tar1090/stargazers)
 [![Docker Pulls](https://img.shields.io/docker/pulls/blackoutsecure/tar1090?style=flat-square&color=E7931D&logo=docker&logoColor=FFFFFF)](https://hub.docker.com/r/blackoutsecure/tar1090)
 [![GitHub Release](https://img.shields.io/github/release/blackoutsecure/docker-tar1090.svg?style=flat-square&color=E7931D&logo=github&logoColor=FFFFFF)](https://github.com/blackoutsecure/docker-tar1090/releases)
-[![Release CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/release.yml?style=flat-square&label=release%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/release.yml)
-[![Publish CI](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/publish.yml?style=flat-square&label=publish%20ci&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/publish.yml)
+[![Balena Hub](https://img.shields.io/badge/balena%20hub-tar1090-E7931D?style=flat-square&logo=balena&logoColor=FFFFFF)](https://hub.balena.io/blocks/2352352/tar1090)
+[![Blackout Secure Launchpad](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/bos-launchpad.yml?style=flat-square&label=blackout%20secure%20launchpad&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/bos-launchpad.yml)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0)
 
 LinuxServer.io-style containerized build of [tar1090](https://github.com/wiedehopf/tar1090), an improved, fast ADS-B web interface for readsb/dump1090-fa with maps, history, filters, and multi-instance support.
@@ -31,8 +31,6 @@ Quick links:
 - GitHub repository: [blackoutsecure/docker-tar1090](https://github.com/blackoutsecure/docker-tar1090)
 - Upstream application: [wiedehopf/tar1090](https://github.com/wiedehopf/tar1090)
 - Upstream query parameters: [tar1090 README-query.md](https://github.com/wiedehopf/tar1090/blob/master/README-query.md)
-
-[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/blackoutsecure/docker-tar1090&configUrl=https://raw.githubusercontent.com/blackoutsecure/docker-tar1090/main/balena.yml)
 
 ---
 
@@ -471,13 +469,11 @@ Every build produces multiple tags so you can pin at the granularity you need:
 
 ### How It Works
 
-Three GitHub Actions workflows handle version tracking and publishing:
+Release plumbing is handled by a thin caller for the [Blackout Secure Launchpad](https://github.com/blackoutsecure/bos-automation-hub) reusable workflow, defined in [`.github/workflows/bos-launchpad.yml`](../../actions/workflows/bos-launchpad.yml). On a 6-hour cron (and on manual dispatch) it runs three stages end-to-end:
 
-1. **[Upstream Release Monitor](../../actions/workflows/upstream-release-monitor.yml)** — Runs every 6 hours. Fetches both the upstream `version` file and latest commit hash, compares against the tracked state in `.github/upstream/tar1090-master.json`, and dispatches builds when either value changes.
-
-2. **[Publish](../../actions/workflows/publish.yml)** — Combined Docker Hub and Balena publish workflow. Builds multi-arch images (amd64, arm64), pushes to Docker Hub with version, upstream commit, and `latest` tags, updates the Docker Hub description, and deploys the Balena block release. OCI labels include both `org.opencontainers.image.version` (from version file) and custom `io.tar1090.upstream.commit` labels.
-
-3. **[Release](../../actions/workflows/release.yml)** — Creates GitHub Releases with full release notes. On manual dispatch, fetches the upstream version to use as the release tag. Produces semver Docker tags plus the upstream commit tag.
+1. **Monitor** — Polls the `version` file at the head of `wiedehopf/tar1090@master`, compares against `.github/upstream/tar1090-master.json`, and commits the tracking file when upstream moves.
+2. **Docker** — Builds multi-arch images (amd64, arm64), tags `latest`, `<version>`, `<major>.<minor>`, `<major>`, `upstream-<commit>`, and `sha-<run-sha>` on Docker Hub, then refreshes the Docker Hub description from this README and runs a Docker Scout scan.
+3. **Balena** — Renders `balena.yml` dynamically from the launchpad inputs and publishes the `tar1090` block release. This repo opts out of automated GitHub Releases (`github_release: false`).
 
 ### Checking Your Image Version
 
