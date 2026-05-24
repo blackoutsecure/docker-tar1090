@@ -1,6 +1,6 @@
 {
   "repo": "wiedehopf/tar1090",
-  "source": "branch_head",
+  "source": "github_branch_file",
   "branch": "master",
   "version": "3.14.1807",
   "commit": "f861480821c96b0b74132367e97cf1aa731ff133"
