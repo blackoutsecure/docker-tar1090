@@ -8,7 +8,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/blackoutsecure/tar1090?style=flat-square&color=E7931D&logo=docker&logoColor=FFFFFF)](https://hub.docker.com/r/blackoutsecure/tar1090)
 [![GitHub Release](https://img.shields.io/github/release/blackoutsecure/docker-tar1090.svg?style=flat-square&color=E7931D&logo=github&logoColor=FFFFFF)](https://github.com/blackoutsecure/docker-tar1090/releases)
 [![Balena Hub](https://img.shields.io/badge/balena%20hub-tar1090-E7931D?style=flat-square&logo=balena&logoColor=FFFFFF)](https://hub.balena.io/blocks/2352352/tar1090)
-[![Blackout Secure Launchpad](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/bos-launchpad.yml?style=flat-square&label=blackout%20secure%20launchpad&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/bos-launchpad.yml)
+[![Blackout Secure Launchpad](https://img.shields.io/github/actions/workflow/status/blackoutsecure/docker-tar1090/bos-launchpad-release.yml?style=flat-square&label=blackout%20secure%20launchpad&color=E7931D)](https://github.com/blackoutsecure/docker-tar1090/actions/workflows/bos-launchpad-release.yml)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0)
 [![Made by BlackoutSecure](https://img.shields.io/badge/made%20by-BlackoutSecure-1f1f1f?style=flat-square)](https://github.com/blackoutsecure)
 
@@ -470,7 +470,7 @@ Every build produces multiple tags so you can pin at the granularity you need:
 
 ### How It Works
 
-Release plumbing is handled by a thin caller for the [Blackout Secure Launchpad](https://github.com/blackoutsecure/bos-automation-hub) reusable workflow, defined in [`.github/workflows/bos-launchpad.yml`](../../actions/workflows/bos-launchpad.yml). On a 6-hour cron (and on manual dispatch) it runs three stages end-to-end:
+Release plumbing is handled by a thin caller for the [Blackout Secure Launchpad](https://github.com/blackoutsecure/bos-automation-hub) reusable workflow, defined in [`.github/workflows/bos-launchpad-release.yml`](../../actions/workflows/bos-launchpad-release.yml). On a 6-hour cron (and on manual dispatch) it runs three stages end-to-end:
 
 1. **Monitor** — Polls the `version` file at the head of `wiedehopf/tar1090@master`, compares against `.github/upstream/tar1090-master.json`, and commits the tracking file when upstream moves.
 2. **Docker** — Builds multi-arch images (amd64, arm64), tags `latest`, `<version>`, `<major>.<minor>`, `<major>`, `upstream-<commit>`, and `sha-<run-sha>` on Docker Hub, then refreshes the Docker Hub description from this README and runs a Docker Scout scan.
